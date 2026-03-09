@@ -5,20 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="theme-color" content="#0f1f3d" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Primary Childcare" />
   <title>Primary Childcare – Daycare Management</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #f0f4f8; }
-  </style>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.23.9/babel.min.js"></script>
+  <style>* { box-sizing: border-box; margin: 0; padding: 0; } body { background: #f0f4f8; }</style>
 </head>
 <body>
   <div id="root"></div>
-  <script type="text/babel" data-presets="react">
+  <script type="text/babel">
 const { useState, useEffect, useRef } = React;
 
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
@@ -186,7 +182,7 @@ const BASE_ROLE_PERMISSIONS = {
 
 const DEFAULT_WIDGET_ORDER = ["stats","attendance","rooms","overdue","incidents_widget","ratios_widget"];
 
-export default function DaycareApp() {
+function DaycareApp() {
   // ── Permission system ──────────────────────────────────────────────────────
   const [currentUser, setCurrentUser] = useState({ name: "Jordan Bell", role: "Director", email: "j.bell@primarychildcare.com" });
 
@@ -4614,8 +4610,7 @@ function EmployeePortal({ children, staff, attendance, setAttendance, showNotifi
   );
 }
 
-
-ReactDOM.createRoot(document.getElementById('root')).render(<DaycareApp />);
+ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(DaycareApp));
   </script>
 </body>
 </html>
