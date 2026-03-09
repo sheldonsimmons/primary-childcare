@@ -36,6 +36,7 @@ var __spreadValues = (a, b) => {
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 const { useState, useEffect, useRef } = React;
 const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_API_KEY = "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";
 const mockParents = [
   { id: "p1", name: "Tasha Johnson", email: "tasha.j@email.com", phone: "254-555-0101", relationship: "Mother" },
   { id: "p2", name: "Marcus Brooks", email: "marcus.b@email.com", phone: "254-555-0102", relationship: "Father" },
@@ -1537,7 +1538,7 @@ function IncidentsModule({ incidents, setIncidents, children, setEmailModal, sho
     if (!aiNote.trim()) return;
     setAiGenerating(true);
     try {
-      const res = await fetch(ANTHROPIC_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1e3, messages: [{ role: "user", content: `You are a daycare administrator. Write a professional incident description and recommended action based on this note: "${aiNote}". Respond in JSON only: {"description": "...", "action": "..."}` }] }) });
+      const res = await fetch(ANTHROPIC_API_URL, { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1e3, messages: [{ role: "user", content: `You are a daycare administrator. Write a professional incident description and recommended action based on this note: "${aiNote}". Respond in JSON only: {"description": "...", "action": "..."}` }] }) });
       const data = await res.json();
       const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, "").trim());
       setForm((f) => __spreadProps(__spreadValues({}, f), { description: parsed.description, action: parsed.action }));
@@ -1668,7 +1669,7 @@ Try asking: "Who has outstanding balances?" or "What did the kids eat today?" or
     try {
       const res = await fetch(ANTHROPIC_API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1500,
