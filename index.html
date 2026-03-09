@@ -35,8 +35,92 @@ var __spreadValues = (a, b) => {
 };
 var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
 const { useState, useEffect, useRef } = React;
-const ANTHROPIC_API_URL = "https://api.anthropic.com/v1/messages";
-const ANTHROPIC_API_KEY = "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";
+const SUPABASE_URL = "https://llgxholxmvcmqlprldui.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsZ3hob2x4bXZjbXFscHJsZHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMwNzUwMTMsImV4cCI6MjA4ODY1MTAxM30.xw7RPlLHpGg6Xldd64bD1jFbel5OocFD_efNIeSbAoY";
+const sb = {
+  async get(table, opts) {
+    opts = opts || {};
+    let url = SUPABASE_URL + "/rest/v1/" + table + "?";
+    if (opts.select) url += "select=" + opts.select + "&";
+    if (opts.filter) url += opts.filter + "&";
+    url += "order=id.asc";
+    const res = await fetch(url, { headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY } });
+    return res.json();
+  },
+  async insert(table, data) {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/" + table, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", Prefer: "return=representation" },
+      body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+  async update(table, filter, data) {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?" + filter, {
+      method: "PATCH",
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", Prefer: "return=representation" },
+      body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+  async upsert(table, data, onConflict) {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/" + table + "?on_conflict=" + onConflict, {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY, "Content-Type": "application/json", Prefer: "return=representation,resolution=merge-duplicates" },
+      body: JSON.stringify(data)
+    });
+    return res.json();
+  },
+  async del(table, filter) {
+    await fetch(SUPABASE_URL + "/rest/v1/" + table + "?" + filter, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY }
+    });
+  }
+};
+const toChild = function(r) {
+  return r ? { id: r.id, name: r.name, preferredName: r.preferred_name || "", age: r.age, room: r.room, parent: r.parent, parentEmail: r.parent_email, email: r.email, phone: r.phone, phones: r.phones || [], allergies: r.allergies || "None", balance: r.balance || 0, status: r.status, weeklyTuition: r.weekly_tuition || 0, billingCycle: r.billing_cycle || "weekly", lateFee: r.late_fee || 0, registrationFee: r.registration_fee || 0, photo: r.photo } : null;
+};
+const toStaff = function(r) {
+  return r ? { id: r.id, name: r.name, role: r.role, room: r.room, rooms: r.rooms || [], email: r.email, phone: r.phone, certifications: r.certifications, status: r.status, startDate: r.start_date } : null;
+};
+const toInvoice = function(r) {
+  return r ? { id: r.id, childId: r.child_id, child: r.child, parent: r.parent, email: r.email, amount: r.amount, due: r.due, status: r.status, description: r.description } : null;
+};
+const toPayment = function(r) {
+  return r ? { id: r.id, invoiceId: r.invoice_id, childId: r.child_id, child: r.child, amount: r.amount, method: r.method, date: r.date, note: r.note, recordedBy: r.recorded_by } : null;
+};
+const toIncident = function(r) {
+  return r ? { id: r.id, childId: r.child_id, child: r.child, date: r.date, type: r.type, description: r.description, action: r.action, parentNotified: r.parent_notified } : null;
+};
+const toSubsidy = function(r) {
+  return r ? { id: r.id, childId: r.child_id, childName: r.child_name, type: r.type, agency: r.agency, monthlyAmt: r.monthly_amt, startDate: r.start_date, endDate: r.end_date, caseNumber: r.case_number, status: r.status } : null;
+};
+const toSchedule = function(r) {
+  return r ? { id: r.id, staffId: r.staff_id, staffName: r.staff_name, day: r.day, start: r.start_time, end: r.end_time, room: r.room } : null;
+};
+const toComm = function(r) {
+  return r ? { id: r.id, date: r.date, time: r.time, type: r.type, to: r.to_address, child: r.child, subject: r.subject, body: r.body, sentBy: r.sent_by } : null;
+};
+const toWaitlist = function(r) {
+  return r ? { id: r.id, childName: r.child_name, dob: r.dob, parentName: r.parent_name, parentEmail: r.parent_email, parentPhone: r.parent_phone, desiredRoom: r.desired_room, desiredStart: r.desired_start, notes: r.notes, addedDate: r.added_date, priority: r.priority, status: r.status } : null;
+};
+const toImm = function(r) {
+  return r ? { id: r.id, childId: r.child_id, vaccine: r.vaccine, doses: r.doses, required: r.required, lastDate: r.last_date, nextDue: r.next_due, status: r.status } : null;
+};
+const toRoom = function(r) {
+  return r ? { id: r.id, name: r.name, ageRange: r.age_range, capacity: r.capacity, color: r.color } : null;
+};
+const toSettings = function(r) {
+  return r ? { centerName: r.center_name, address: r.address, phone: r.phone, email: r.email, hours: r.hours, tuitionRate: r.tuition_rate, latePickupFee: r.late_pickup_fee, registrationFee: r.registration_fee, autoReminderDays: r.auto_reminder_days, timezone: r.timezone } : null;
+};
+const toAtt = function(r) {
+  return r ? { id: r.id, childId: r.child_id, date: r.date, checkIn: r.check_in, checkOut: r.check_out, present: r.present, lateCheckOut: r.late_check_out, feeWaived: r.fee_waived, customFee: r.custom_fee } : null;
+};
+const toLog = function(r) {
+  return r ? { childId: r.child_id, date: r.date, mood: r.mood, meals: r.meals || [], naps: r.naps || [], diapers: r.diapers || [], notes: r.notes || "", photos: r.photos || [], assignedTeacher: r.assigned_teacher || "" } : null;
+};
+const ANTHROPIC_API_URL = "/api/claude";
 const mockParents = [
   { id: "p1", name: "Tasha Johnson", email: "tasha.j@email.com", phone: "254-555-0101", relationship: "Mother" },
   { id: "p2", name: "Marcus Brooks", email: "marcus.b@email.com", phone: "254-555-0102", relationship: "Father" },
@@ -207,6 +291,7 @@ const BASE_ROLE_PERMISSIONS = {
 const DEFAULT_WIDGET_ORDER = ["stats", "attendance", "rooms", "overdue", "incidents_widget", "ratios_widget"];
 function DaycareApp() {
   const today = "2026-03-03";
+  const [dbLoading, setDbLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState({ name: "Jordan Bell", role: "Director", email: "j.bell@primarychildcare.com" });
   const [customRoles, setCustomRoles] = useState({});
   const ROLE_PERMISSIONS = __spreadValues(__spreadValues({}, BASE_ROLE_PERMISSIONS), customRoles);
@@ -218,6 +303,84 @@ function DaycareApp() {
     const onResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
+  }, []);
+  useEffect(() => {
+    async function loadAll() {
+      try {
+        const [
+          childRows,
+          staffRows,
+          attRows,
+          invRows,
+          payRows,
+          incRows,
+          subRows,
+          schedRows,
+          commRows,
+          wlRows,
+          immRows,
+          roomRows,
+          settingsRows,
+          logRows
+        ] = await Promise.all([
+          sb.get("children"),
+          sb.get("staff"),
+          sb.get("attendance"),
+          sb.get("invoices"),
+          sb.get("payments"),
+          sb.get("incidents"),
+          sb.get("subsidies"),
+          sb.get("schedules"),
+          sb.get("comm_log"),
+          sb.get("waitlist"),
+          sb.get("immunizations"),
+          sb.get("rooms"),
+          sb.get("settings"),
+          sb.get("activity_logs")
+        ]);
+        if (Array.isArray(childRows) && childRows.length) setChildren(childRows.map(toChild));
+        if (Array.isArray(staffRows) && staffRows.length) setStaff(staffRows.map(toStaff));
+        if (Array.isArray(invRows) && invRows.length) setInvoices(invRows.map(toInvoice));
+        if (Array.isArray(payRows) && payRows.length) setPayments(payRows.map(toPayment));
+        if (Array.isArray(incRows) && incRows.length) setIncidents(incRows.map(toIncident));
+        if (Array.isArray(subRows) && subRows.length) setSubsidies(subRows.map(toSubsidy));
+        if (Array.isArray(schedRows) && schedRows.length) setSchedules(schedRows.map(toSchedule));
+        if (Array.isArray(commRows) && commRows.length) setCommLog(commRows.map(toComm));
+        if (Array.isArray(wlRows) && wlRows.length) setWaitlist(wlRows.map(toWaitlist));
+        if (Array.isArray(roomRows) && roomRows.length) setRooms(roomRows.map(toRoom));
+        if (Array.isArray(settingsRows) && settingsRows.length) {
+          setSettings(toSettings(settingsRows[0]));
+        }
+        if (Array.isArray(immRows) && immRows.length) {
+          const immByChild = {};
+          immRows.map(toImm).forEach((r) => {
+            if (!immByChild[r.childId]) immByChild[r.childId] = [];
+            immByChild[r.childId].push(r);
+          });
+          setImmunizations(immByChild);
+        }
+        if (Array.isArray(attRows) && attRows.length) {
+          const attByDate = {};
+          attRows.map(toAtt).forEach((r) => {
+            if (!attByDate[r.date]) attByDate[r.date] = [];
+            attByDate[r.date].push(r);
+          });
+          setAttendance(attByDate);
+        }
+        if (Array.isArray(logRows) && logRows.length) {
+          const logsByDate = {};
+          logRows.map(toLog).forEach((r) => {
+            if (!logsByDate[r.date]) logsByDate[r.date] = {};
+            logsByDate[r.date][r.childId] = r;
+          });
+          setActivityLogs(logsByDate);
+        }
+      } catch (e) {
+        console.error("Supabase load error:", e);
+      }
+      setDbLoading(false);
+    }
+    loadAll();
   }, []);
   const navigateTo = (tabId) => {
     setActiveTab(tabId);
@@ -337,6 +500,7 @@ function DaycareApp() {
   ];
   const navTabs = tabs.filter((t) => canAccess(t.id));
   const MOBILE_QUICK_TABS = ["dashboard", "children", "attendance", "billing", "ai"];
+  if (dbLoading) return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", background: "#f0f4f8", fontFamily: "'Inter',-apple-system,sans-serif" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 48, marginBottom: 16 } }, "\u{1F31F}"), /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 700, fontSize: 20, color: "#0f1f3d", marginBottom: 8 } }, "Primary Childcare"), /* @__PURE__ */ React.createElement("div", { style: { color: "#888", fontSize: 14, marginBottom: 24 } }, "Loading your center data..."), /* @__PURE__ */ React.createElement("div", { style: { width: 200, height: 4, background: "#e0e8f4", borderRadius: 4, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: "60%", height: 4, background: "#1a73e8", borderRadius: 4 } })));
   return /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "'Outfit', sans-serif", minHeight: "100vh", background: "#f0f4f8", display: "flex" } }, /* @__PURE__ */ React.createElement("link", { href: "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap", rel: "stylesheet" }), !isMobile && /* @__PURE__ */ React.createElement("aside", { style: { width: 224, background: "#0f1f3d", minHeight: "100vh", display: "flex", flexDirection: "column", position: "fixed", top: 0, left: 0, zIndex: 100 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 18px 14px", borderBottom: "1px solid rgba(255,255,255,0.08)" } }, /* @__PURE__ */ React.createElement("div", { style: { color: "#4fc3f7", fontWeight: 700, fontSize: 14, lineHeight: 1.3 } }, "\u2600\uFE0F Primary Childcare"), /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.4)", fontSize: 10, marginTop: 2 } }, "Daycare Management")), /* @__PURE__ */ React.createElement("nav", { style: { flex: 1, padding: "10px 8px", overflowY: "auto" } }, navTabs.map((t) => /* @__PURE__ */ React.createElement("button", { key: t.id, onClick: () => navigateTo(t.id), style: { display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "9px 11px", borderRadius: 8, border: "none", cursor: "pointer", marginBottom: 2, textAlign: "left", background: activeTab === t.id ? "rgba(79,195,247,0.15)" : "transparent", color: activeTab === t.id ? "#4fc3f7" : "rgba(255,255,255,0.55)", fontFamily: "inherit", fontSize: 13, fontWeight: activeTab === t.id ? 600 : 400 } }, /* @__PURE__ */ React.createElement(Icon, { path: t.icon, size: 15 }), t.label)), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12, padding: "10px 8px", borderTop: "1px solid rgba(255,255,255,0.08)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 } }, "Demo: Switch Role"), /* @__PURE__ */ React.createElement("select", { value: currentUser.role, onChange: (e) => setCurrentUser(__spreadProps(__spreadValues({}, currentUser), { role: e.target.value })), style: { width: "100%", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, padding: "5px 8px", fontFamily: "inherit", fontSize: 12, cursor: "pointer" } }, [...Object.keys(BASE_ROLE_PERMISSIONS), ...Object.keys(customRoles)].map((r) => /* @__PURE__ */ React.createElement("option", { key: r, value: r, style: { background: "#0f1f3d" } }, r))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 4 } }, "\u{1F464} ", currentUser.name))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "1px solid rgba(255,255,255,0.08)" } }, canAccess("admin") && /* @__PURE__ */ React.createElement("button", { onClick: () => navigateTo("admin"), style: { display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "12px 19px", background: activeTab === "admin" ? "rgba(255,193,7,0.12)" : "transparent", color: activeTab === "admin" ? "#ffc107" : "rgba(255,255,255,0.4)", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: activeTab === "admin" ? 600 : 400 } }, /* @__PURE__ */ React.createElement(Icon, { path: icons.admin, size: 15 }), "\u2699\uFE0F Admin Settings"), /* @__PURE__ */ React.createElement("button", { onClick: () => setNotifCenter(true), style: { display: "flex", alignItems: "center", gap: 9, width: "100%", padding: "10px 19px", background: "transparent", color: "rgba(255,255,255,0.4)", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { position: "relative" } }, "\u{1F514}", notifLog.filter((n) => n.date === today).length > 0 && /* @__PURE__ */ React.createElement("span", { style: { position: "absolute", top: -2, right: -2, width: 6, height: 6, background: "#ef5350", borderRadius: "50%", display: "block" } })), "Notifications ", notifLog.filter((n) => n.date === today).length > 0 && /* @__PURE__ */ React.createElement("span", { style: { background: "#ef5350", color: "#fff", borderRadius: 10, padding: "0 5px", fontSize: 10, fontWeight: 700, marginLeft: "auto" } }, notifLog.filter((n) => n.date === "2026-03-03").length)), /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 18px 12px", color: "rgba(255,255,255,0.25)", fontSize: 10 } }, "Killeen, TX \xB7 v2.1"))), isMobile && /* @__PURE__ */ React.createElement("div", { style: { position: "fixed", top: 0, left: 0, right: 0, height: 56, background: "#0f1f3d", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", boxShadow: "0 2px 8px rgba(0,0,0,0.2)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { color: "#4fc3f7", fontWeight: 700, fontSize: 13 } }, "\u2600\uFE0F Primary Childcare"), /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.4)", fontSize: 9 } }, "Daycare Management")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setNotifCenter(true), style: { position: "relative", background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, padding: "8px 10px", cursor: "pointer", color: "#fff", fontSize: 16, lineHeight: 1 } }, "\u{1F514}", notifLog.filter((n) => n.date === today).length > 0 && /* @__PURE__ */ React.createElement("span", { style: { position: "absolute", top: 4, right: 4, width: 7, height: 7, background: "#ef5350", borderRadius: "50%", display: "block" } })), /* @__PURE__ */ React.createElement("button", { onClick: () => setMobileNavOpen((o) => !o), style: { background: "rgba(255,255,255,0.1)", border: "none", borderRadius: 8, padding: "8px 10px", cursor: "pointer", color: "#fff", fontSize: 18, lineHeight: 1 } }, mobileNavOpen ? "\u2715" : "\u2630"))), isMobile && mobileNavOpen && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { onClick: () => setMobileNavOpen(false), style: { position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 300 } }), /* @__PURE__ */ React.createElement("div", { style: { position: "fixed", top: 0, left: 0, bottom: 0, width: 260, background: "#0f1f3d", zIndex: 400, display: "flex", flexDirection: "column", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 16px 12px", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { color: "#4fc3f7", fontWeight: 700, fontSize: 14 } }, "\u2600\uFE0F Primary Childcare"), /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.4)", fontSize: 10 } }, "Daycare Management")), /* @__PURE__ */ React.createElement("button", { onClick: () => setMobileNavOpen(false), style: { background: "none", border: "none", color: "rgba(255,255,255,0.5)", fontSize: 20, cursor: "pointer" } }, "\u2715")), /* @__PURE__ */ React.createElement("nav", { style: { flex: 1, padding: "10px 8px" } }, navTabs.map((t) => /* @__PURE__ */ React.createElement("button", { key: t.id, onClick: () => navigateTo(t.id), style: { display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "11px 12px", borderRadius: 8, border: "none", cursor: "pointer", marginBottom: 3, textAlign: "left", background: activeTab === t.id ? "rgba(79,195,247,0.15)" : "transparent", color: activeTab === t.id ? "#4fc3f7" : "rgba(255,255,255,0.65)", fontFamily: "inherit", fontSize: 14, fontWeight: activeTab === t.id ? 600 : 400 } }, /* @__PURE__ */ React.createElement(Icon, { path: t.icon, size: 16 }), t.label)), canAccess("admin") && /* @__PURE__ */ React.createElement("button", { onClick: () => navigateTo("admin"), style: { display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "11px 12px", borderRadius: 8, border: "none", cursor: "pointer", marginTop: 6, textAlign: "left", background: activeTab === "admin" ? "rgba(255,193,7,0.12)" : "transparent", color: activeTab === "admin" ? "#ffc107" : "rgba(255,255,255,0.4)", fontFamily: "inherit", fontSize: 14, fontWeight: activeTab === "admin" ? 600 : 400 } }, /* @__PURE__ */ React.createElement(Icon, { path: icons.admin, size: 16 }), "\u2699\uFE0F Admin Settings")), /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 16px", borderTop: "1px solid rgba(255,255,255,0.08)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "rgba(255,255,255,0.3)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: 6 } }, "Demo: Switch Role"), /* @__PURE__ */ React.createElement("select", { value: currentUser.role, onChange: (e) => setCurrentUser(__spreadProps(__spreadValues({}, currentUser), { role: e.target.value })), style: { width: "100%", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 6, padding: "7px 8px", fontFamily: "inherit", fontSize: 13, cursor: "pointer" } }, [...Object.keys(BASE_ROLE_PERMISSIONS), ...Object.keys(customRoles)].map((r) => /* @__PURE__ */ React.createElement("option", { key: r, value: r, style: { background: "#0f1f3d" } }, r))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 6 } }, "\u{1F464} ", currentUser.name, " \xB7 Killeen, TX")))), isMobile && /* @__PURE__ */ React.createElement("div", { style: { position: "fixed", bottom: 0, left: 0, right: 0, height: 60, background: "#0f1f3d", zIndex: 200, display: "flex", borderTop: "1px solid rgba(255,255,255,0.1)" } }, MOBILE_QUICK_TABS.filter((id) => canAccess(id)).map((id) => {
     const t = tabs.find((x) => x.id === id);
     if (!t) return null;
@@ -796,8 +960,9 @@ function AdminPanel({ rooms, setRooms, settings, setSettings, users, setUsers, s
     setUsers(users.map((u) => u.id === id ? __spreadProps(__spreadValues({}, u), { status: u.status === "active" ? "inactive" : "active" }) : u));
     showNotification("User status updated");
   };
-  const saveSettings = () => {
+  const saveSettings = async () => {
     setSettings(__spreadValues({}, localSettings));
+    await sb.update("settings", "id=eq.1", { center_name: localSettings.centerName, address: localSettings.address, phone: localSettings.phone, email: localSettings.email, hours: localSettings.hours, tuition_rate: localSettings.tuitionRate, late_pickup_fee: localSettings.latePickupFee, registration_fee: localSettings.registrationFee, auto_reminder_days: localSettings.autoReminderDays, timezone: localSettings.timezone });
     showNotification("Settings saved");
   };
   return /* @__PURE__ */ React.createElement("div", { style: { animation: "fadeIn 0.4s ease" } }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("h1", { style: { margin: 0, fontSize: 22, fontWeight: 700, color: "#0f1f3d" } }, "\u2699\uFE0F Admin Settings"), /* @__PURE__ */ React.createElement("p", { style: { margin: "4px 0 0", color: "#888", fontSize: 13 } }, "Manage rooms, users, fees, and center configuration")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 4, marginBottom: 24, background: "#fff", borderRadius: 10, padding: 4, boxShadow: "0 1px 4px rgba(0,0,0,0.06)", width: "fit-content" } }, sections.map((s) => /* @__PURE__ */ React.createElement("button", { key: s.id, onClick: () => setSection(s.id), style: { padding: "7px 14px", borderRadius: 7, border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500, background: section === s.id ? "#0f1f3d" : "transparent", color: section === s.id ? "#fff" : "#666" } }, s.label))), section === "overview" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16, marginBottom: 24 } }, [["Total Rooms", rooms.length, `${rooms.reduce((s, r) => s + r.capacity, 0)} seats`, "#7b1fa2", "#f3e5f5"], ["Active Users", users.filter((u) => u.status === "active").length, `${users.length} accounts`, "#0f9d58", "#e6f4ea"], ["Enrolled", children.length, `${staff.length} staff`, "#1a73e8", "#e8f0fe"]].map(([l, v, s, c, bg]) => /* @__PURE__ */ React.createElement("div", { key: l, style: { background: "#fff", borderRadius: 12, padding: "20px 22px", boxShadow: "0 1px 4px rgba(0,0,0,0.06)" } }, /* @__PURE__ */ React.createElement("div", { style: { color: "#888", fontSize: 11, fontWeight: 600, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.5px" } }, l), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 28, fontWeight: 700, color: c } }, v), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "#999", marginTop: 4 } }, s)))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { background: "#fff", borderRadius: 12, padding: 20, boxShadow: "0 1px 4px rgba(0,0,0,0.06)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, fontSize: 14, marginBottom: 14, paddingBottom: 10, borderBottom: "1px solid #f2f4f8" } }, "Room Occupancy"), rooms.map((r) => {
@@ -926,7 +1091,7 @@ function ChildrenModule({ children, allChildren, setChildren, parents, setParent
     acc[key].push(c);
     return acc;
   }, {});
-  const saveAdd = () => {
+  const saveAdd = async () => {
     if (!form.name || !form.parent) return showNotification("Name and parent name required");
     const dupName = children.find((c) => c.name.toLowerCase() === form.name.toLowerCase() && c.parentEmail === form.parentEmail);
     if (dupName) return showNotification(`\u26A0\uFE0F ${form.name} is already enrolled under this parent account`);
@@ -939,25 +1104,18 @@ function ChildrenModule({ children, allChildren, setChildren, parents, setParent
         });
       }
     }
-    setChildren([...children, __spreadProps(__spreadValues({}, form), {
-      id: Date.now(),
-      age: parseInt(form.age) || 0,
-      balance: 0,
-      status: "active",
-      weeklyTuition: parseFloat(form.weeklyTuition) || settings.tuitionRate,
-      registrationFee: parseFloat(form.registrationFee) || settings.registrationFee,
-      lateFee: parseFloat(form.lateFee) || settings.latePickupFee
-    })]);
+    const dbRow = { name: form.name, preferred_name: form.preferredName || "", age: parseInt(form.age) || 0, room: form.room, parent: form.parent, parent_email: form.parentEmail, email: form.email, phone: form.phone, phones: form.phones || [], allergies: form.allergies || "None", balance: 0, status: "active", weekly_tuition: parseFloat(form.weeklyTuition) || settings.tuitionRate, registration_fee: parseFloat(form.registrationFee) || settings.registrationFee, late_fee: parseFloat(form.lateFee) || settings.latePickupFee };
+    const rows = await sb.insert("children", dbRow);
+    const newChild = Array.isArray(rows) && rows[0] ? toChild(rows[0]) : __spreadProps(__spreadValues({}, form), { id: Date.now(), age: parseInt(form.age) || 0, balance: 0, status: "active", weeklyTuition: parseFloat(form.weeklyTuition) || settings.tuitionRate });
+    setChildren([...children, newChild]);
     setAdding(false);
     setForm(blank);
     showNotification(`${form.name} added`);
   };
-  const saveEdit = () => {
-    setChildren(children.map((c) => c.id === editing.id ? __spreadProps(__spreadValues(__spreadValues({}, c), form), {
-      weeklyTuition: parseFloat(form.weeklyTuition) || c.weeklyTuition || settings.tuitionRate,
-      registrationFee: parseFloat(form.registrationFee) || c.registrationFee || 0,
-      lateFee: parseFloat(form.lateFee) || c.lateFee || settings.latePickupFee
-    }) : c));
+  const saveEdit = async () => {
+    const updated = __spreadProps(__spreadValues({}, form), { weeklyTuition: parseFloat(form.weeklyTuition) || editing.weeklyTuition || settings.tuitionRate, registrationFee: parseFloat(form.registrationFee) || editing.registrationFee || 0, lateFee: parseFloat(form.lateFee) || editing.lateFee || settings.latePickupFee });
+    setChildren(children.map((c) => c.id === editing.id ? __spreadValues(__spreadValues({}, c), updated) : c));
+    await sb.update("children", "id=eq." + editing.id, { name: updated.name, preferred_name: updated.preferredName, age: updated.age, room: updated.room, parent: updated.parent, parent_email: updated.parentEmail, email: updated.email, phone: updated.phone, phones: updated.phones || [], allergies: updated.allergies, weekly_tuition: updated.weeklyTuition, registration_fee: updated.registrationFee, late_fee: updated.lateFee, status: updated.status, photo: updated.photo || null });
     setEditing(null);
     showNotification(`${form.name} updated`);
   };
@@ -1107,7 +1265,21 @@ function AttendanceModule({ children, allChildren, attendance, setAttendance, se
   const getDefaultDayAtt = () => children.map((c) => ({ childId: c.id, checkIn: null, checkOut: null, lateCheckOut: null, present: false }));
   const dayAtt = attendance[date] || getDefaultDayAtt();
   const now = () => (/* @__PURE__ */ new Date()).toTimeString().slice(0, 5);
-  const setDayAtt = (updated) => setAttendance(__spreadProps(__spreadValues({}, attendance), { [date]: updated }));
+  const setDayAtt = async (updated) => {
+    setAttendance(__spreadProps(__spreadValues({}, attendance), { [date]: updated }));
+    for (const a of updated) {
+      await sb.upsert("attendance", {
+        child_id: a.childId,
+        date,
+        check_in: a.checkIn || null,
+        check_out: a.checkOut || null,
+        present: !!a.present,
+        late_check_out: !!a.lateCheckOut,
+        fee_waived: !!a.feeWaived,
+        custom_fee: a.customFee || null
+      }, "child_id,date");
+    }
+  };
   const checkIn = (childId) => {
     const base = dayAtt.length ? dayAtt : getDefaultDayAtt();
     const updated = base.map((a) => a.childId === childId ? __spreadProps(__spreadValues({}, a), { present: true, checkIn: now(), checkOut: null, lateCheckOut: null }) : a);
@@ -1366,11 +1538,12 @@ function BillingModule({ invoices, setInvoices, children, setChildren, incidents
     setRecordingPayment(inv);
     setPayForm({ method: "ACH", amount: String(inv.amount), date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0], note: "" });
   };
-  const savePayment = () => {
+  const savePayment = async () => {
     if (!payForm.amount || !recordingPayment) return;
     const amt = parseFloat(payForm.amount);
-    const newPay = { id: "PAY-" + Date.now(), invoiceId: recordingPayment.id, childId: recordingPayment.childId, child: recordingPayment.child, amount: amt, method: payForm.method, date: payForm.date, note: payForm.note, recordedBy: "Jordan Bell" };
-    setPayments((prev) => [...prev || [], newPay]);
+    const newPay = { id: "PAY-" + Date.now(), invoice_id: recordingPayment.id, child_id: recordingPayment.childId, child: recordingPayment.child, amount: amt, method: payForm.method, date: payForm.date, note: payForm.note, recorded_by: "Jordan Bell" };
+    await sb.insert("payments", newPay);
+    setPayments((prev) => [...prev || [], toPayment(newPay)]);
     const totalPaid = (payments || []).filter((p) => p.invoiceId === recordingPayment.id).reduce((s, p) => s + p.amount, 0) + amt;
     if (totalPaid >= recordingPayment.amount) {
       setInvoices(invoices.map((i) => i.id === recordingPayment.id ? __spreadProps(__spreadValues({}, i), { status: "paid" }) : i));
@@ -1394,14 +1567,15 @@ function BillingModule({ invoices, setInvoices, children, setChildren, incidents
     const child = children.find((c) => c.id === inv.childId);
     setEmailModal(__spreadValues({ child, to: inv.email }, emailTemplates.tuition_reminder(inv.child, inv.parent, inv.amount, inv.due, settings.centerName)));
   };
-  const saveInvoice = () => {
+  const saveInvoice = async () => {
     const child = children.find((c) => c.id === parseInt(invForm.childId));
     if (!child || !invForm.amount) return;
-    const newInv = { id: `INV-${Date.now()}`, childId: child.id, child: child.name, parent: child.parent, email: child.email, amount: parseFloat(invForm.amount), due: invForm.due, status: invForm.status, description: invForm.description || `Tuition \u2014 ${child.name}` };
-    setInvoices([...invoices, newInv]);
+    const newInv = { id: "INV-" + Date.now(), child_id: child.id, child: child.name, parent: child.parent, email: child.email, amount: parseFloat(invForm.amount), due: invForm.due, status: invForm.status, description: invForm.description || "Tuition \u2014 " + child.name };
+    await sb.insert("invoices", newInv);
+    setInvoices([...invoices, toInvoice(newInv)]);
     setAddingInv(false);
     setInvForm({ childId: "", description: "", amount: "", due: "", status: "pending" });
-    showNotification(`Invoice created for ${child.name}`);
+    showNotification("Invoice created for " + child.name);
   };
   const generateWeeklyInvoices = () => {
     const newInvs = children.map((c) => ({
@@ -1538,7 +1712,7 @@ function IncidentsModule({ incidents, setIncidents, children, setEmailModal, sho
     if (!aiNote.trim()) return;
     setAiGenerating(true);
     try {
-      const res = await fetch(ANTHROPIC_API_URL, { method: "POST", headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1e3, messages: [{ role: "user", content: `You are a daycare administrator. Write a professional incident description and recommended action based on this note: "${aiNote}". Respond in JSON only: {"description": "...", "action": "..."}` }] }) });
+      const res = await fetch(ANTHROPIC_API_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1e3, messages: [{ role: "user", content: `You are a daycare administrator. Write a professional incident description and recommended action based on this note: "${aiNote}". Respond in JSON only: {"description": "...", "action": "..."}` }] }) });
       const data = await res.json();
       const parsed = JSON.parse(data.content[0].text.replace(/```json|```/g, "").trim());
       setForm((f) => __spreadProps(__spreadValues({}, f), { description: parsed.description, action: parsed.action }));
@@ -1547,10 +1721,12 @@ function IncidentsModule({ incidents, setIncidents, children, setEmailModal, sho
     }
     setAiGenerating(false);
   };
-  const addIncident = () => {
+  const addIncident = async () => {
     var _a2;
     const child = children.find((c) => c.id === parseInt(form.childId));
-    setIncidents([...incidents, __spreadProps(__spreadValues({}, form), { id: Date.now(), childId: parseInt(form.childId), child: (child == null ? void 0 : child.name) || "", parentNotified: false })]);
+    const newInc = __spreadProps(__spreadValues({}, form), { id: Date.now(), childId: parseInt(form.childId), child: (child == null ? void 0 : child.name) || "", parentNotified: false });
+    await sb.insert("incidents", { child_id: newInc.childId, child: newInc.child, date: newInc.date, type: newInc.type, description: newInc.description, action: newInc.action, parent_notified: false });
+    setIncidents([...incidents, newInc]);
     setAdding(false);
     setAiNote("");
     showNotification("Incident report created");
@@ -1669,7 +1845,7 @@ Try asking: "Who has outstanding balances?" or "What did the kids eat today?" or
     try {
       const res = await fetch(ANTHROPIC_API_URL, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           model: "claude-sonnet-4-20250514",
           max_tokens: 1500,
@@ -1806,8 +1982,19 @@ function ActivityLogsModule({ children, allChildren, attendance, staff, showNoti
     setEditing(child.id);
     setEditForm(JSON.parse(JSON.stringify(__spreadValues({ photos: [] }, log))));
   };
-  const saveLog = () => {
+  const saveLog = async () => {
     setLogs((prev) => __spreadProps(__spreadValues({}, prev), { [date]: __spreadProps(__spreadValues({}, prev[date] || {}), { [editing]: editForm }) }));
+    await sb.upsert("activity_logs", {
+      child_id: editing,
+      date,
+      mood: editForm.mood,
+      meals: editForm.meals,
+      naps: editForm.naps,
+      diapers: editForm.diapers,
+      notes: editForm.notes,
+      photos: editForm.photos || [],
+      assigned_teacher: editForm.assignedTeacher || ""
+    }, "child_id,date");
     setEditing(null);
     showNotification("Activity log saved \u2014 photos visible in Parent Portal");
   };
@@ -2118,9 +2305,11 @@ function WaitlistModule({ waitlist, setWaitlist, showNotification, rooms }) {
   const [blank] = useState({ childName: "", dob: "", parentName: "", parentEmail: "", parentPhone: "", desiredRoom: "", desiredStart: "", notes: "", priority: "normal", status: "waiting" });
   const [form, setForm] = useState(blank);
   const [expandId, setExpandId] = useState(null);
-  const save = () => {
+  const save = async () => {
     if (!form.childName.trim() || !form.parentName.trim()) return showNotification("Child and parent name required");
-    setWaitlist((prev) => [...prev, __spreadProps(__spreadValues({}, form), { id: "WL-" + Date.now(), addedDate: (/* @__PURE__ */ new Date()).toISOString().split("T")[0] })]);
+    const newEntry = __spreadProps(__spreadValues({}, form), { id: "WL-" + Date.now(), addedDate: (/* @__PURE__ */ new Date()).toISOString().split("T")[0] });
+    await sb.insert("waitlist", { id: newEntry.id, child_name: newEntry.childName, dob: newEntry.dob || null, parent_name: newEntry.parentName, parent_email: newEntry.parentEmail, parent_phone: newEntry.parentPhone, desired_room: newEntry.desiredRoom, desired_start: newEntry.desiredStart || null, notes: newEntry.notes, added_date: newEntry.addedDate, priority: newEntry.priority, status: newEntry.status });
+    setWaitlist((prev) => [...prev, newEntry]);
     setAdding(false);
     setForm(blank);
     showNotification(`${form.childName} added to waitlist`);
